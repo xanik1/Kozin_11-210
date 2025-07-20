@@ -46,7 +46,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: model
-          path: models/model.joblib
+          path: models/personality_model.joblib
 
       - name: 🔮 Инференс модели (src/inference.py)
         run: python src/inference.py
@@ -84,12 +84,3 @@ jobs:
         run: |
           mkdir -p output
           docker run --rm -v ${{ github.workspace }}/output:/app/output ${{ secrets.DOCKERHUB_USERNAME }}/kozin-11-210:latest python3 src/inference.py
-
-      - name: Загрузка артефактов инференса
-        uses: actions/upload-artifact@v4
-        with:
-          name: inference-results
-          path: |
-            output/predictions.csv
-            output/report.html
-
