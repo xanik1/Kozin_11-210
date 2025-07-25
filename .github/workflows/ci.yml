@@ -84,3 +84,22 @@ jobs:
         run: |
           mkdir -p output
           docker run --rm -v ${{ github.workspace }}/output:/app/output ${{ secrets.DOCKERHUB_USERNAME }}/kozin-11-210:latest python3 src/inference.py
+      - name: Деплой на удалённый сервер
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key
+          chmod 600 private_key
+                
+          ssh -o StrictHostKeyChecking=no -i private_key -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+            docker stop kozin-11-210 || true
+            docker rm kozin-11-210 || true
+
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/kozin-11-210:latest
+
+            docker run -d --name kozin-11-210 -p 8000:8000 ${{ secrets.DOCKERHUB_USERNAME }}/kozin-11-210:latest
+            sleep 5
+            docker exec kozin-11-210 python3 src/inference.py
+          EOF
+
+          rm private_key
